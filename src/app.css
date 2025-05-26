@@ -1,0 +1,7 @@
+@import url(https://db.onlinewebfonts.com/c/25aa37eee4a8a72fa7d2702b548cd843?family=Cerebri+Sans+SemiBold); 
+@import 'tailwindcss';
+@plugin '@tailwindcss/typography';
+
+* {
+    font-family: "Cerebri Sans SemiBold"; 
+}
