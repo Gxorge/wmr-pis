@@ -6,6 +6,14 @@ export function getRTTData(serviceUid: string): Promise<RTTResponse> {
     })
 }
 
+export function getRTTLineupData(crs: string): Promise<RTTLocationLineup> {
+    return fetch("/api/lineup/" + crs)
+    .then(res => res.json())
+    .then(res => {
+        return res as RTTLocationLineup
+    })
+}
+
 export async function whereIsTrain(serviceUid: string): Promise<RTTWhereIsTrain> {
     let data: RTTResponse = await getRTTData(serviceUid);
     let current = 0;
@@ -50,4 +58,9 @@ export async function whereIsTrain(serviceUid: string): Promise<RTTWhereIsTrain>
 
         displayAs: "DESTINATION"
     } as RTTWhereIsTrain
+}
+
+export async function getLocationLineup(crs: string): Promise<RTTLocationLineup> {
+    let data: RTTLocationLineup = await getRTTLineupData(crs);
+    return data;
 }

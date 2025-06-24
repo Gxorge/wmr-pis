@@ -13,16 +13,19 @@
   let nowApproaching: boolean = false;
   let welcomeTo: boolean = false;
   let currentData: RTTWhereIsTrain = {status: "", location: "", locationCode: "", for: "", forCode: "", callingAt: [], callingAtCodes: [], displayAs: ""};
-  let fullCallRead: string[] = ['DDG', 'WTE', 'TYS', 'SMA', 'BMO', 'BSW', 'JEQ', 'SGB', 'SBJ', 'KID', 'DTW', 'WOS', 'WOF'];
+  let nextLineup: RTTLocationLineup | undefined;
+  let fullCallRead: string[] = ['DDG', 'WTE', 'TYS', 'SMA', 'BMO', 'BSW', 'SBJ', 'KID', 'DTW', 'WOS', 'WOF'];
 
   const inbetweenStationsLoop = new LoopController(async () => {
     fem.thisTrainIsFor(currentData.for);
     await new Promise(res => setTimeout(res, 10_000));
     if (!inbetweenStationsLoop.isRunning()) return;
     // calling at
-    // connections
+    fem.connections(currentData.location);
+    await new Promise(res => setTimeout(res, 10_000));
+    if (!inbetweenStationsLoop.isRunning()) return;
     // photos
-    inbetweenStationsLoop.stop();
+    //inbetweenStationsLoop.stop();
   });
 
   const approachingStationLoop = new LoopController(async () => {
@@ -46,6 +49,14 @@
     atStationLoop.stop();
   });
 
+  const terminateLoop = new LoopController(async () => {
+    fem.thisIsFinal(currentData.location);
+    //await new Promise(res => setTimeout(res, 10_000));
+    //if (!terminateLoop.isRunning()) return;
+    //fem.thisTrainIsFor(currentData.for);
+    //atStationLoop.stop();
+  });
+
   onMount(async () => {
     // debug
     (window as any).approaching = fem.approaching;
@@ -64,6 +75,16 @@
     tf.push('bing bong');
     await playAudioFiles(tf, false);
 
+    // Next station data lineup
+    setInterval(async () => {
+      if (currentData.locationCode == null) {
+        nextLineup = undefined;
+        return;
+      }
+
+      nextLineup = await bem.getLocationLineup(currentData.locationCode);
+    }, 60 * 1000)
+
     setInterval(async () => {
       let data = await bem.whereIsTrain(serviceUid);
 
@@ -72,6 +93,7 @@
         currentData = data;
         nowApproaching = false;
         welcomeTo = false;
+        nextLineup = await bem.getLocationLineup(currentData.locationCode);
       }
 
       console.log("status: '" + data.status + "'")
@@ -88,7 +110,12 @@
         files.push({ id: `stations.${data.locationCode}`, opts: { delayStart: 200 } });
 
         if (data.locationCode == data.forCode) {
-          files.push({ id: 'our final destination', opts: { delayStart: 200 } })
+          files.push({ id: 'our final destination', opts: { delayStart: 200 } });
+        }
+
+        if (data.locationCode == "SBJ") {
+          files.push({ id: 'change here for', opts: { delayStart: 300 } });
+          files.push({ id: 'stations.SBT', opts: { delayStart: 200 } })
         }
 
         if (data.locationCode == "BSW") {
@@ -106,7 +133,10 @@
 
         inbetweenStationsLoop.stop();
         approachingStationLoop.stop();
-        atStationLoop.start();
+        if (data.locationCode != data.forCode)
+          atStationLoop.start();
+        else
+          terminateLoop.start();
         welcomeTo = true;
 
         const files: AudioItem[] = [];
@@ -147,6 +177,63 @@
             approachingStationLoop.stop();
             inbetweenStationsLoop.start();
         }
+
+        var table: HTMLTableElement = document.getElementById("wmr-connections-table") as HTMLTableElement;
+        for(var i = table.rows.length - 1; i > 0; i--)
+        {
+            table.deleteRow(i);
+        }
+
+        if (nextLineup == undefined) {
+          document.getElementById('wmr-connections-unavailable')!!.style.display = "flex";
+          return;
+        } else {
+          document.getElementById('wmr-connections-unavailable')!!.style.display = "hidden";
+        }
+
+        var count = 0;
+        nextLineup.services.forEach(data => {
+          if (data.serviceUid == serviceUid)
+            return;
+
+          if (count == 5)
+            return;
+          count++;
+
+          var row = table.insertRow();
+          row.classList.add('border-b');
+          row.classList.add('border-gray-300');
+          row.classList.add('text-2xl');
+          row.classList.add('font-medium');
+
+          var time = row.insertCell(0);
+          time.innerHTML = data.locationDetail.gbttBookedDeparture;
+          time.classList.add('py-2');
+          time.classList.add('px-4');
+
+          var dest = row.insertCell(1);
+          dest.innerHTML = data.locationDetail.destination[0]!!.description;
+          dest.classList.add('py-2');
+          dest.classList.add('px-4');
+
+          var plat = row.insertCell(2);
+          if (data.locationDetail.platform != undefined)
+            plat.innerHTML = data.locationDetail.platform;
+          plat.classList.add('py-2');
+          plat.classList.add('px-4');
+          plat.classList.add("text-center");
+
+          var expt = row.insertCell(3);
+          expt.classList.add('py-2');
+          expt.classList.add('px-4');
+          expt.classList.add("text-center");
+          if (data.locationDetail.gbttBookedDeparture+2 <= data.locationDetail.realtimeDeparture) {
+            expt.innerHTML = data.locationDetail.realtimeDeparture;
+            expt.classList.add("text-red-600");
+          } else {
+            expt.innerHTML = "On Time"
+          }
+        });
       }
 
     }, 10 * 1000)
@@ -162,6 +249,17 @@
       <p id="wmr-double-bottom" class="text-8xl font-extrabold text-gray-900 leading-none" style="color: #FF8201;">
         
       </p>
+      <div id="wmr-journey-complete">
+        <p id="wmr-double-top" class="text-5xl text-gray-600 mb-2 leading-none" style="color: #55565A;">
+          <br>
+          This train completes its journey here.
+          <br>
+          <br>
+          Thank you for travelling with
+          <br>
+          <span style="color: #FF8201;">West Midlands Railway.</span>
+        </p>
+      </div>
     </div>
   </div>
 
@@ -207,6 +305,41 @@
       </p>
     </div>
   </section>
+
+  <section id="wmr-connections" class="hidden w-full bg-white text-[#55565A] px-6 py-8">
+    <div class="flex flex-col w-full">
+      
+      <!-- Title with ID -->
+      <h2 id="wmr-connections-title" class="text-4xl font-bold mb-6">Olton Connections</h2>
+      
+      <!-- Table -->
+      <div class="overflow-x-auto">
+        <table id="wmr-connections-table" class="w-full text-left border-separate" style="border-spacing: 8px 0;">
+          <thead>
+            <tr class="text-white text-xl">
+              <th class="py-2 px-4" style="background-color: #55565A;">TIME</th>
+              <th class="py-2 px-4" style="background-color: #55565A;">DESTINATION</th>
+              <th class="py-2 px-4" style="background-color: #55565A;">PLAT.</th>
+              <th class="py-2 px-4" style="background-color: #55565A;">EXPECTED</th>
+            </tr>
+          </thead>
+          <tbody class="text-2xl font-medium">
+          </tbody>
+        </table>
+        <div id="wmr-connections-unavailable">
+          <br><br> 
+          <p class="text-center text-2xl">Onward journey information temporarily unavailable, please wait.</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+
+
+
+
+
 
 
 

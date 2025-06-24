@@ -64,3 +64,51 @@ interface RTTWhereIsTrain {
     callingAtCodes: string[],
     displayAs: string,
 }
+
+interface RTTLocationLineup {
+    location: {
+        name: string,
+        crs: string,
+        tiploc: string,
+        country: string,
+        system: string
+    },
+    services: {
+        locationDetail: {
+            realtimeActivated: boolean,
+            tiploc: string,
+            crs: string,
+            description: string,
+            gbttBookedArrival: string,
+            gbttBookedDeparture: string,
+            origin: {
+                tipLoc: string,
+                description: string,
+                workingTime: string,
+                publicTime: string
+            }[],
+            destination: {
+                tipLoc: string,
+                description: string,
+                workingTime: string,
+                publicTime: string
+            }[],
+            isCall: boolean,
+            isPubLicCall: true,
+            realtimeArrival: string,
+            realtimeArrivalActual: boolean,
+            realtimeDeparture: string,
+            realtimeDepatureActual: boolean,
+            displayAs: string,
+            platform: string | undefined,
+        },
+        serviceUid: string,
+        runDate: string,
+        trainIdentity: string,
+        runningIdentity: string,
+        atocCode: string,
+        atocName: string,
+        serviceType: string,
+        isPassenger: boolean
+    }[]
+}

@@ -1,11 +1,26 @@
+export function hideAllButFooter() {
+    document.getElementById('wmr-double')!!.style.display = "none";
+    document.getElementById('wmr-journey-complete')!!.style.display = "none";
+    document.getElementById('wmr-platform-step')!!.style.display = "none";
+    document.getElementById('wmr-platform-pushchair')!!.style.display = "none";
+    document.getElementById('wmr-logo-only')!!.style.display = "none";
+    document.getElementById('wmr-connections')!!.style.display = "none";
+
+    document.getElementById('wmr-footer')!!.style.display = "flex";
+    document.getElementById('wmr-footer-text')!!.style.display = "flex";
+}
+
+export function showFooter() {
+    document.getElementById('wmr-footer')!!.style.display = "flex";
+    document.getElementById('wmr-footer-text')!!.style.display = "flex";
+}
+
 export function defaultToLogo(keepFooterText: boolean = false): void {
     if (!keepFooterText)
       document.getElementById('wmr-footer-text')!!.innerHTML = "";
 
-    document.getElementById('wmr-double')!!.style.display = "none";
-    document.getElementById('wmr-platform-step')!!.style.display = "none";
-    document.getElementById('wmr-platform-pushchair')!!.style.display = "none";
-    document.getElementById('wmr-footer')!!.style.display = "flex";
+    hideAllButFooter();
+    showFooter();
     document.getElementById('wmr-logo-only')!!.style.display = "flex";
 }
 
@@ -18,27 +33,21 @@ export function approaching(station: string): void {
     document.getElementById('wmr-platform-step-station')!!.innerHTML = station;
     document.getElementById('wmr-platform-pushchair-station')!!.innerHTML = station;
 
-    document.getElementById('wmr-logo-only')!!.style.display = "none";
+    hideAllButFooter();
+    showFooter();
     document.getElementById('wmr-double')!!.style.display = "flex";
-    document.getElementById('wmr-platform-step')!!.style.display = "none";
-    document.getElementById('wmr-platform-pushchair')!!.style.display = "none";
-    document.getElementById('wmr-footer')!!.style.display = "flex";
 }
 
 export function approachingPlatformStep(): void {
-    document.getElementById('wmr-logo-only')!!.style.display = "none";
-    document.getElementById('wmr-double')!!.style.display = "none";
+    hideAllButFooter();
+    showFooter();
     document.getElementById('wmr-platform-step')!!.style.display = "flex";
-    document.getElementById('wmr-platform-pushchair')!!.style.display = "none";
-    document.getElementById('wmr-footer')!!.style.display = "flex";
 }
 
 export function approachingPlatformPushchair(): void {
-    document.getElementById('wmr-logo-only')!!.style.display = "none";
-    document.getElementById('wmr-double')!!.style.display = "none";
-    document.getElementById('wmr-platform-step')!!.style.display = "none";
+    hideAllButFooter();
+    showFooter();
     document.getElementById('wmr-platform-pushchair')!!.style.display = "flex";
-    document.getElementById('wmr-footer')!!.style.display = "flex";
 }
 
 export function thisIs(station: string): void {
@@ -47,11 +56,9 @@ export function thisIs(station: string): void {
 
     document.getElementById('wmr-footer-text')!!.innerHTML = "This station is " + station;
 
-    document.getElementById('wmr-logo-only')!!.style.display = "none";
+    hideAllButFooter();
+    showFooter();
     document.getElementById('wmr-double')!!.style.display = "flex";
-    document.getElementById('wmr-platform-step')!!.style.display = "none";
-    document.getElementById('wmr-platform-pushchair')!!.style.display = "none";
-    document.getElementById('wmr-footer')!!.style.display = "flex";
 }
 
 export function theNextStationIs(station: string): void {
@@ -60,21 +67,37 @@ export function theNextStationIs(station: string): void {
 
     document.getElementById('wmr-footer-text')!!.innerHTML = "The next station is " + station;
 
-    document.getElementById('wmr-logo-only')!!.style.display = "none";
+    hideAllButFooter();
+    showFooter();
     document.getElementById('wmr-double')!!.style.display = "flex";
-    document.getElementById('wmr-platform-step')!!.style.display = "none";
-    document.getElementById('wmr-platform-pushchair')!!.style.display = "none";
-    document.getElementById('wmr-footer')!!.style.display = "flex";
 }
 
 export function thisTrainIsFor(station: string): void {
     document.getElementById('wmr-double-top')!!.innerHTML = "This train is for";
     document.getElementById('wmr-double-bottom')!!.innerHTML = station;
 
-    document.getElementById('wmr-logo-only')!!.style.display = "none";
-    document.getElementById('wmr-platform-step')!!.style.display = "none";
-    document.getElementById('wmr-platform-pushchair')!!.style.display = "none";
+    hideAllButFooter();
+    showFooter();
     document.getElementById('wmr-double')!!.style.display = "flex";
+}
+
+export function thisIsFinal(station: string): void {
+    document.getElementById('wmr-double-top')!!.innerHTML = "This is";
+    document.getElementById('wmr-double-bottom')!!.innerHTML = station;
+
+    hideAllButFooter();
+    showFooter();
+    document.getElementById('wmr-footer-text')!!.style.display = "none";
+    document.getElementById('wmr-double')!!.style.display = "flex";
+    document.getElementById('wmr-journey-complete')!!.style.display = "flex";
+}
+
+export function connections(station: string): void {
+    document.getElementById('wmr-connections-title')!!.innerHTML = station + " Connections";
+
+    hideAllButFooter();
+    showFooter();
+    document.getElementById('wmr-connections')!!.style.display = "flex";
 }
 
 export function updateFooterTime(): void {
