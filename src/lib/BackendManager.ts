@@ -1,3 +1,14 @@
+export const stationNames: Record<string, string> = {
+    'SAV': "Stratford U Avon",
+    'STY': "Stratford U A Pway",
+    'BMO': "B'ham Moor St",
+    'BSW': "B'ham Snow Hill",
+    'SGB': "Smethwick G B",
+    'SBJ': "Stourbridge Jcn",
+    'WOS': "Worcester S Hill",
+    'WOF': "Worcester F Street"
+};
+
 export function getRTTData(serviceUid: string): Promise<RTTResponse> {
     return fetch("/api/" + serviceUid)
     .then(res => res.json())
@@ -29,16 +40,18 @@ export async function whereIsTrain(serviceUid: string): Promise<RTTWhereIsTrain>
         return { 
             status: loc.serviceLocation, 
 
-            location: loc.description, 
+            location: stationNames[loc.crs] ?? loc.description, 
+            locationFull: loc.description,
             locationCode: loc.crs, 
 
-            for: spliced.at(-1)!!.description,
+            for: stationNames[spliced.at(-1)!!.crs] ?? spliced.at(-1)!!.description,
             forCode: spliced.at(-1)!!.crs, 
 
-            callingAt: spliced.map(l => l.description),
+            callingAt: spliced.map(l => stationNames[l.crs] ?? l.description),
             callingAtCodes: spliced.map(l => l.crs),
             
-            displayAs: loc.displayAs 
+            displayAs: loc.displayAs,
+            terminated: (loc.displayAs == "DESTINATION" && loc.realtimeArrivalActual)
         } as RTTWhereIsTrain;
     }
 
@@ -47,16 +60,18 @@ export async function whereIsTrain(serviceUid: string): Promise<RTTWhereIsTrain>
     return { 
         status: "", 
 
-        location: data.locations[data.locations.length-1].description, 
+        location: stationNames[data.locations[data.locations.length-1].crs] ?? data.locations[data.locations.length-1].description, 
+        locationFull: data.locations[data.locations.length-1].description, 
         locationCode: data.locations[data.locations.length-1].crs, 
 
-        for: data.locations[data.locations.length-1].description, 
+        for: stationNames[data.locations[data.locations.length-1].crs] ?? data.locations[data.locations.length-1].description, 
         forCode: data.locations[data.locations.length-1].crs, 
 
-        callingAt: spliced.map(l => l.description),
+        callingAt: spliced.map(l => stationNames[l.crs] ?? l.description),
         callingAtCodes: spliced.map(l => l.crs),
 
-        displayAs: "DESTINATION"
+        displayAs: "DESTINATION",
+        terminated: true
     } as RTTWhereIsTrain
 }
 

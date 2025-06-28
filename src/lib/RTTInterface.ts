@@ -57,12 +57,14 @@ interface RTTResponse {
 interface RTTWhereIsTrain {
     status: string,
     location: string,
+    locationFull: string,
     locationCode: string,
     for: string,
     forCode: string,
     callingAt: string[],
     callingAtCodes: string[],
     displayAs: string,
+    terminated: boolean,
 }
 
 interface RTTLocationLineup {

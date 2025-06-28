@@ -2,6 +2,8 @@
 	import smallLogo from '$lib/assets/small-logo.png';
   import platformStep from '$lib/assets/platform-step.png';
   import platformPushcair from '$lib/assets/platform-pushchair.png';
+  import samaritans from '$lib/assets/samaritans.png';
+  import ontherails from '$lib/assets/on-the-rails.png';
 	import { onMount } from 'svelte';
   import { page } from '$app/state';
   import * as fem from '$lib/FrontendManager';
@@ -12,7 +14,8 @@
   let serviceUid: string = page.params.uid;
   let nowApproaching: boolean = false;
   let welcomeTo: boolean = false;
-  let currentData: RTTWhereIsTrain = {status: "", location: "", locationCode: "", for: "", forCode: "", callingAt: [], callingAtCodes: [], displayAs: ""};
+  let terminated: boolean = false;
+  let currentData: RTTWhereIsTrain = {status: "", location: "", locationFull: "", locationCode: "", for: "", forCode: "", callingAt: [], callingAtCodes: [], displayAs: "", terminated: false};
   let nextLineup: RTTLocationLineup | undefined;
   let fullCallRead: string[] = ['DDG', 'WTE', 'TYS', 'SMA', 'BMO', 'BSW', 'SBJ', 'KID', 'DTW', 'WOS', 'WOF'];
 
@@ -25,6 +28,13 @@
     await new Promise(res => setTimeout(res, 10_000));
     if (!inbetweenStationsLoop.isRunning()) return;
     // photos
+    fem.samaritans();
+    await new Promise(res => setTimeout(res, 10_000));
+    if (!inbetweenStationsLoop.isRunning()) return;
+
+    fem.onTheRails();
+    await new Promise(res => setTimeout(res, 10_000));
+    if (!inbetweenStationsLoop.isRunning()) return;
     //inbetweenStationsLoop.stop();
   });
 
@@ -46,11 +56,13 @@
     await new Promise(res => setTimeout(res, 10_000));
     if (!atStationLoop.isRunning()) return;
     fem.thisTrainIsFor(currentData.for);
-    atStationLoop.stop();
+    await new Promise(res => setTimeout(res, 20_000));
+    if (!atStationLoop.isRunning()) return;
   });
 
   const terminateLoop = new LoopController(async () => {
     fem.thisIsFinal(currentData.location);
+    terminateLoop.stop();
     //await new Promise(res => setTimeout(res, 10_000));
     //if (!terminateLoop.isRunning()) return;
     //fem.thisTrainIsFor(currentData.for);
@@ -85,7 +97,11 @@
       nextLineup = await bem.getLocationLineup(currentData.locationCode);
     }, 60 * 1000)
 
-    setInterval(async () => {
+    var loop = setInterval(async () => {
+      console.log('hi ' + terminated);
+      if (terminated)
+        return;
+
       let data = await bem.whereIsTrain(serviceUid);
 
       if (currentData.location != data.location) {
@@ -94,6 +110,19 @@
         nowApproaching = false;
         welcomeTo = false;
         nextLineup = await bem.getLocationLineup(currentData.locationCode);
+
+        if (data.terminated) {
+            terminateLoop.start();
+            const files: AudioItem[] = [];
+            files.push('bing bong');
+            files.push('this is');
+            files.push({ id: `stations.${data.forCode}`, opts: { delayStart: 200 } });
+            files.push({ id: 'our final destination', opts: { delayStart: 200 } });
+            files.push({ id: 'please mind the gap when leaving the train and step', opts: { delayStart: 500 } });
+            await playAudioFiles(files, false);
+            clearInterval(loop);
+            return;
+        }
       }
 
       console.log("status: '" + data.status + "'")
@@ -148,6 +177,7 @@
             files.push({ id: 'our final destination', opts: { delayStart: 200 } });
             files.push({ id: 'please mind the gap when leaving the train and step', opts: { delayStart: 500 } });
             await playAudioFiles(files, false);
+            terminated = true;
             return;
         }
 
@@ -188,7 +218,7 @@
           document.getElementById('wmr-connections-unavailable')!!.style.display = "flex";
           return;
         } else {
-          document.getElementById('wmr-connections-unavailable')!!.style.display = "hidden";
+          document.getElementById('wmr-connections-unavailable')!!.style.display = "none";
         }
 
         var count = 0;
@@ -270,7 +300,25 @@
     </p>
   </section>
 
-  <section id="wmr-platform-step" class="hidden flex-col items-center justify-center px-4 text-center h-[50vh]">
+  <section id="wmr-samaritans" class="hidden w-screen h-screen bg-white flex items-center justify-center">
+    <img 
+      src={samaritans}
+      alt="Samaritans Poster" 
+      class="max-w-full max-h-full object-contain" 
+    />
+  </section>
+
+  <section id="wmr-ontherails" class="hidden w-screen h-screen bg-white flex items-center justify-center">
+    <img 
+      src={ontherails}
+      alt="On the Rails Poster" 
+      class="max-w-full max-h-full object-contain" 
+    />
+  </section>
+
+
+
+  <section id="wmr-platform-step" class="hidden flex-col items-center justify-center px-4 text-center h-screen">
     <!-- Top Title -->
     <p id="wmr-platform-step-station" class="text-8xl font-extrabold text-[#FF8201] leading-none mb-8">
       Olton
@@ -288,7 +336,7 @@
     </div>
   </section>
 
-  <section id="wmr-platform-pushchair" class="hidden flex-col items-center justify-center px-4 text-center h-[50vh]">
+  <section id="wmr-platform-pushchair" class="hidden flex-col items-center justify-center px-4 text-center h-screen">
     <!-- Top Title -->
     <p id="wmr-platform-pushchair-station" class="text-8xl font-extrabold text-[#FF8201] leading-none mb-8">
       Olton
