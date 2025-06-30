@@ -9,6 +9,16 @@ export const stationNames: Record<string, string> = {
     'WOF': "Worcester F Street"
 };
 
+export const stationChanges: Record<string, string> = {
+    'BMO': 'Banbury & London Marylebone. Alight for Bull Ring shopping centre and New Street station',
+    'BSW': 'Colmore Business District',
+    'THW': 'Connect with West Midlands Metro',
+    'SGB': 'Wolverhampton, Crewe & Liverpool Lime St',
+    'SBJ': 'Stourbridge Town',
+    'DTW': 'Birmingham Snow Hill',
+    'WOS': 'Oxford, Reading & London Paddington'
+};
+
 export function getRTTData(serviceUid: string): Promise<RTTResponse> {
     return fetch("/api/" + serviceUid)
     .then(res => res.json())
@@ -43,6 +53,7 @@ export async function whereIsTrain(serviceUid: string): Promise<RTTWhereIsTrain>
             location: stationNames[loc.crs] ?? loc.description, 
             locationFull: loc.description,
             locationCode: loc.crs, 
+            change: stationChanges[loc.crs] ?? undefined,
 
             for: stationNames[spliced.at(-1)!!.crs] ?? spliced.at(-1)!!.description,
             forCode: spliced.at(-1)!!.crs, 
@@ -63,6 +74,7 @@ export async function whereIsTrain(serviceUid: string): Promise<RTTWhereIsTrain>
         location: stationNames[data.locations[data.locations.length-1].crs] ?? data.locations[data.locations.length-1].description, 
         locationFull: data.locations[data.locations.length-1].description, 
         locationCode: data.locations[data.locations.length-1].crs, 
+        change: stationChanges[data.locations[data.locations.length-1].crs] ?? undefined,
 
         for: stationNames[data.locations[data.locations.length-1].crs] ?? data.locations[data.locations.length-1].description, 
         forCode: data.locations[data.locations.length-1].crs, 

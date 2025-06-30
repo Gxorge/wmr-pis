@@ -5,6 +5,7 @@ export function hideAllButFooter() {
     document.getElementById('wmr-platform-pushchair')!!.style.display = "none";
     document.getElementById('wmr-logo-only')!!.style.display = "none";
     document.getElementById('wmr-connections')!!.style.display = "none";
+    document.getElementById('wmr-calling-at')!!.style.display = "none";
     document.getElementById('wmr-samaritans')!!.style.display = "none";
     document.getElementById('wmr-ontherails')!!.style.display = "none";
 
@@ -19,6 +20,7 @@ export function hideAll() {
     document.getElementById('wmr-platform-pushchair')!!.style.display = "none";
     document.getElementById('wmr-logo-only')!!.style.display = "none";
     document.getElementById('wmr-connections')!!.style.display = "none";
+    document.getElementById('wmr-calling-at')!!.style.display = "none";
     document.getElementById('wmr-samaritans')!!.style.display = "none";
     document.getElementById('wmr-ontherails')!!.style.display = "none";
 
@@ -60,6 +62,14 @@ export function approachingPlatformStep(): void {
 export function approachingPlatformPushchair(): void {
     hideAllButFooter();
     document.getElementById('wmr-platform-pushchair')!!.style.display = "flex";
+}
+
+export function changeHereFor(change: string): void {
+    document.getElementById('wmr-double-top')!!.innerHTML = "Change here for";
+    document.getElementById('wmr-double-bottom')!!.innerHTML = change;
+
+    hideAllButFooter();
+    document.getElementById('wmr-double')!!.style.display = "flex";
 }
 
 export function thisIs(station: string): void {
@@ -104,7 +114,12 @@ export function connections(station: string): void {
     document.getElementById('wmr-connections-title')!!.innerHTML = station + " Connections";
 
     hideAllButFooter();
-    document.getElementById('wmr-connections')!!.style.display = "flex";
+    document.getElementById('wmr-connections')!!.style.display = "block";
+}
+
+export function callingAt(): void {
+    hideAllButFooter();
+    document.getElementById('wmr-calling-at')!!.style.display = "block";
 }
 
 export function samaritans(): void {

@@ -59,6 +59,7 @@ interface RTTWhereIsTrain {
     location: string,
     locationFull: string,
     locationCode: string,
+    change: string | undefined,
     for: string,
     forCode: string,
     callingAt: string[],

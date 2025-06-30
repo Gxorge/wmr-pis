@@ -1,5 +1,6 @@
 <script lang="ts">
 	import smallLogo from '$lib/assets/small-logo.png';
+  import trainIcon from '$lib/assets/train-icon.png';
   import platformStep from '$lib/assets/platform-step.png';
   import platformPushcair from '$lib/assets/platform-pushchair.png';
   import samaritans from '$lib/assets/samaritans.png';
@@ -15,7 +16,7 @@
   let nowApproaching: boolean = false;
   let welcomeTo: boolean = false;
   let terminated: boolean = false;
-  let currentData: RTTWhereIsTrain = {status: "", location: "", locationFull: "", locationCode: "", for: "", forCode: "", callingAt: [], callingAtCodes: [], displayAs: "", terminated: false};
+  let currentData: RTTWhereIsTrain = {status: "", location: "", locationFull: "", locationCode: "", change: undefined, for: "", forCode: "", callingAt: [], callingAtCodes: [], displayAs: "", terminated: false};
   let nextLineup: RTTLocationLineup | undefined;
   let fullCallRead: string[] = ['DDG', 'WTE', 'TYS', 'SMA', 'BMO', 'BSW', 'SBJ', 'KID', 'DTW', 'WOS', 'WOF'];
 
@@ -23,11 +24,15 @@
     fem.thisTrainIsFor(currentData.for);
     await new Promise(res => setTimeout(res, 10_000));
     if (!inbetweenStationsLoop.isRunning()) return;
-    // calling at
+    
+    fem.callingAt();
+    await new Promise(res => setTimeout(res, 10_000));
+    if (!inbetweenStationsLoop.isRunning()) return;
+
     fem.connections(currentData.location);
     await new Promise(res => setTimeout(res, 10_000));
     if (!inbetweenStationsLoop.isRunning()) return;
-    // photos
+
     fem.samaritans();
     await new Promise(res => setTimeout(res, 10_000));
     if (!inbetweenStationsLoop.isRunning()) return;
@@ -35,7 +40,6 @@
     fem.onTheRails();
     await new Promise(res => setTimeout(res, 10_000));
     if (!inbetweenStationsLoop.isRunning()) return;
-    //inbetweenStationsLoop.stop();
   });
 
   const approachingStationLoop = new LoopController(async () => {
@@ -49,14 +53,27 @@
 
     fem.approachingPlatformPushchair();
     await new Promise(res => setTimeout(res, 10_000));
+
+    if (currentData.change != undefined) {
+      fem.changeHereFor(currentData.change);
+      await new Promise(res => setTimeout(res, 10_000));
+    }
+
+    fem.connections(currentData.location);
+    await new Promise(res => setTimeout(res, 10_000));
   });
 
   const atStationLoop = new LoopController(async () => {
     fem.thisIs(currentData.location);
     await new Promise(res => setTimeout(res, 10_000));
     if (!atStationLoop.isRunning()) return;
+
     fem.thisTrainIsFor(currentData.for);
     await new Promise(res => setTimeout(res, 20_000));
+    if (!atStationLoop.isRunning()) return;
+
+    fem.callingAt();
+    await new Promise(res => setTimeout(res, 10_000));
     if (!atStationLoop.isRunning()) return;
   });
 
@@ -110,19 +127,20 @@
         nowApproaching = false;
         welcomeTo = false;
         nextLineup = await bem.getLocationLineup(currentData.locationCode);
+      }
 
-        if (data.terminated) {
-            terminateLoop.start();
-            const files: AudioItem[] = [];
-            files.push('bing bong');
-            files.push('this is');
-            files.push({ id: `stations.${data.forCode}`, opts: { delayStart: 200 } });
-            files.push({ id: 'our final destination', opts: { delayStart: 200 } });
-            files.push({ id: 'please mind the gap when leaving the train and step', opts: { delayStart: 500 } });
-            await playAudioFiles(files, false);
-            clearInterval(loop);
-            return;
-        }
+      if (data.terminated && !terminated) {
+        terminateLoop.start();
+        terminated = true;
+        const files: AudioItem[] = [];
+        files.push('bing bong');
+        files.push('this is');
+        files.push({ id: `stations.${data.forCode}`, opts: { delayStart: 200 } });
+        files.push({ id: 'our final destination', opts: { delayStart: 200 } });
+        files.push({ id: 'please mind the gap when leaving the train and step', opts: { delayStart: 500 } });
+        await playAudioFiles(files, false);
+        clearInterval(loop);
+        return;
       }
 
       console.log("status: '" + data.status + "'")
@@ -214,7 +232,7 @@
             table.deleteRow(i);
         }
 
-        if (nextLineup == undefined) {
+        if (nextLineup == undefined || nextLineup.services == null) {
           document.getElementById('wmr-connections-unavailable')!!.style.display = "flex";
           return;
         } else {
@@ -273,30 +291,40 @@
 <div class="min-h-screen flex flex-col">
   <div id="wmr-double" class="flex-grow hidden items-center justify-center px-4 text-center" style="height: 50vh;">
     <div class="max-w-4xl w-full flex flex-col justify-center h-full">
-      <p id="wmr-double-top" class="text-3xl text-gray-600 mb-2 leading-none" style="color: #55565A;">
+      <p id="wmr-double-top" class="text-3xl text-gray-600 mb-2 leading-none" style="color: #54565b;">
         
       </p>
-      <p id="wmr-double-bottom" class="text-8xl font-extrabold text-gray-900 leading-none" style="color: #FF8201;">
+      <p id="wmr-double-bottom" class="text-8xl font-extrabold text-gray-900 leading-none" style="color: #ff8300;">
         
       </p>
       <div id="wmr-journey-complete">
-        <p id="wmr-double-top" class="text-5xl text-gray-600 mb-2 leading-none" style="color: #55565A;">
+        <p id="wmr-double-top" class="text-5xl text-gray-600 mb-2 leading-none" style="color: #54565b;">
           <br>
           This train completes its journey here.
           <br>
           <br>
           Thank you for travelling with
           <br>
-          <span style="color: #FF8201;">West Midlands Railway.</span>
+          <span style="color: #ff8300;">West Midlands Railway.</span>
         </p>
       </div>
     </div>
   </div>
 
+  <div id="wmr-belongings" class="hidden flex-grow items-center justify-center px-4 text-center" style="height: 50vh;">
+    <div class="max-w-4xl w-full flex flex-col justify-center h-full">
+      <img src={trainIcon} alt="Train Icon" class="h-50 w-50 object-contain" />
+      <p class="text-6xl font-extrabold text-gray-900 leading-none" style="color: #54565b;">
+        Please make sure you have all your belongings with you when leaving the train.
+      </p>
+    </div>
+  </div>  
+  
+
   <section id="wmr-logo-only" class="flex flex-grow flex-col items-center px-4 text-center" style="height: 50vh;">
     <img src={smallLogo} alt="Logo" class="h-130 w-130 object-contain" />
       <p class="text-8xl">
-        <span style="color: #55565A;"><b>West Midlands</b></span><br><span style="color: #FF8201;">Railway</span>
+        <span style="color: #54565b;"><b>West Midlands</b></span><br><span style="color: #ff8300;">Railway</span>
     </p>
   </section>
 
@@ -320,7 +348,7 @@
 
   <section id="wmr-platform-step" class="hidden flex-col items-center justify-center px-4 text-center h-screen">
     <!-- Top Title -->
-    <p id="wmr-platform-step-station" class="text-8xl font-extrabold text-[#FF8201] leading-none mb-8">
+    <p id="wmr-platform-step-station" class="text-8xl font-extrabold text-[#ff8300] leading-none mb-8">
       Olton
     </p>
 
@@ -330,7 +358,7 @@
       <img src={platformStep} alt="Platform Step Icon" class="h-[220px] w-auto object-contain" />
 
       <!-- Large Text -->
-      <p class="text-5xl font-normal text-[#55565A] text-left leading-tight max-w-[50%]">
+      <p class="text-5xl font-normal text-[#54565b] text-left leading-tight max-w-[50%]">
         Mind the step and gap when you leave the train. Use the handrail if it helps.
       </p>
     </div>
@@ -338,7 +366,7 @@
 
   <section id="wmr-platform-pushchair" class="hidden flex-col items-center justify-center px-4 text-center h-screen">
     <!-- Top Title -->
-    <p id="wmr-platform-pushchair-station" class="text-8xl font-extrabold text-[#FF8201] leading-none mb-8">
+    <p id="wmr-platform-pushchair-station" class="text-8xl font-extrabold text-[#ff8300] leading-none mb-8">
       Olton
     </p>
 
@@ -348,13 +376,13 @@
       <img src={platformPushcair} alt="Platform Step Icon" class="h-[220px] w-auto object-contain" />
 
       <!-- Large Text -->
-      <p class="text-5xl font-normal text-[#55565A] text-left leading-tight max-w-[50%]">
+      <p class="text-5xl font-normal text-[#54565b] text-left leading-tight max-w-[50%]">
         Step on to the platform before removing heavy luggage and pushchairs.
       </p>
     </div>
   </section>
 
-  <section id="wmr-connections" class="hidden w-full bg-white text-[#55565A] px-6 py-8">
+  <section id="wmr-connections" class="hidden w-full bg-white text-[#54565b] px-6 py-8">
     <div class="flex flex-col w-full">
       
       <!-- Title with ID -->
@@ -365,10 +393,10 @@
         <table id="wmr-connections-table" class="w-full text-left border-separate" style="border-spacing: 8px 0;">
           <thead>
             <tr class="text-white text-xl">
-              <th class="py-2 px-4" style="background-color: #55565A;">TIME</th>
-              <th class="py-2 px-4" style="background-color: #55565A;">DESTINATION</th>
-              <th class="py-2 px-4" style="background-color: #55565A;">PLAT.</th>
-              <th class="py-2 px-4" style="background-color: #55565A;">EXPECTED</th>
+              <th class="py-2 px-4" style="background-color: #54565b;">TIME</th>
+              <th class="py-2 px-4" style="background-color: #54565b;">DESTINATION</th>
+              <th class="py-2 px-4" style="background-color: #54565b;">PLAT.</th>
+              <th class="py-2 px-4" style="background-color: #54565b;">EXPECTED</th>
             </tr>
           </thead>
           <tbody class="text-2xl font-medium">
@@ -383,6 +411,10 @@
     </div>
   </section>
 
+<section id="wmr-calling-at" class="hidden px-10 py-6 bg-white text-[#55565A]">
+  <h2 class="text-5xl font-bold mb-10">Calling at:</h2>
+  <p class="text-center text-2xl">Route information temporarily unavailable, please wait.</p>
+</section>
 
 
 
@@ -391,7 +423,11 @@
 
 
 
-  <footer id="wmr-footer" class="bg-gray-800 text-white h-16 flex justify-between items-center w-full fixed bottom-0 left-0 z-10" style="background-color: #55565A;">
+
+
+
+
+  <footer id="wmr-footer" class="bg-gray-800 text-white h-16 flex justify-between items-center w-full fixed bottom-0 left-0 z-10" style="background-color: #54565b;">
       <!-- Left side: Bold white text with left padding -->
       <div id="wmr-footer-text" class="font-bold pl-4 text-4xl">
           
@@ -400,7 +436,7 @@
       <!-- Right side: Image and Time -->
       <div class="flex items-center h-full">
           <img src={smallLogo} alt="Icon" class="h-full w-16 object-cover" />
-          <span id="wmr-footer-time" class="h-full text-white px-6 flex items-center justify-center text-4xl font-bold leading-none" style="background-color: #FF8201;">
+          <span id="wmr-footer-time" class="h-full text-white px-6 flex items-center justify-center text-4xl font-bold leading-none" style="background-color: #ff8300;">
               
           </span>
       </div>
