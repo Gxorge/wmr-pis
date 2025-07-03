@@ -11,7 +11,7 @@ export const GET: RequestHandler = async ({ params }) => {
 
     const dateObj = new Date();
     const month   = ((dateObj.getUTCMonth() + 1) < 11 ? "0" + (dateObj.getUTCMonth() + 1) : "" + (dateObj.getUTCMonth() + 1)); 
-    const day     = dateObj.getUTCDate();
+    const day     = (dateObj.getUTCDate() < 10 ? "0" + dateObj.getUTCDate() : dateObj.getUTCDate());
     const year    = dateObj.getUTCFullYear();
     console.log(`https://api.rtt.io/api/v1/json/service/${serviceUid}/${year}/${month}/${day}`);
     const response = await fetch(`https://api.rtt.io/api/v1/json/service/${serviceUid}/${year}/${month}/${day}`, {
